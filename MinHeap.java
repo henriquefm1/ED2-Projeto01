@@ -12,23 +12,28 @@ public class MinHeap{
     }
 
     //inserir frequencia na arvore
-    public int inserir(No no, int valor){
-        if(no != null){ //verifica se a arvore existe
-            if(valor < no.valor){ // verifica se o valor inserido eh menor q o valor do no, se sim, vai pra esquerda
-                if(no.esq != null){ //se existir n o na esquerda, ele continua a busca com a recursao
-                    inserir(no.esq, valor);
-                }else{ //se nao for nulo, insere na esquerda
-                    no.esq = new No(valor);
-                }//repete a logica para a direita
-            }else if( valor > no.valor){
-                if(no.dir != null){
-                    inserir(no.dir, valor);
-                }
+    public int inserir(No no){
+        //adiciona novo nó no final da lista de arrays
+        heap.add(novoNo);
+
+        //pega o indice onde entrou
+        int indiceAtual = heap.size() - 1;
+        
+        //faz o nó achar a posição correta
+        while(indiceAtual > 0){
+            //calcula o pai do nó
+            int indicePai = (indiceAtual - 1) / 2;
+
+            No noAtual = heap.get(indiceAtual);
+            No noPai = heap.get(indicePai);
+
+            //verifica as frequencias, se for menor -> troca de lugar, se não, break
+            if(noAtual.frequencia < noPai.frequencia){
+                heap.set(indiceAtual, noPai);
+                heap.set(indicePai, noAtual);
+                indiceAtual = indicePai;
             }else{
-                no.dir = new No(valor);
+                break;
             }
         }
-    }
-
-
 }
