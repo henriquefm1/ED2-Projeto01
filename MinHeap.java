@@ -86,4 +86,15 @@ public class MinHeap{
 
         return menorNo;
     }
+    //função pra imprimir
+    public void imprimir() {
+        System.out.print("[");
+        for (int i = 0; i < heap.size(); i++) {
+            System.out.print("No('" + heap.get(i).caractere + "', " + heap.get(i).frequencia + ")");
+            if (i < heap.size() - 1) {
+                System.out.print(", ");
+            }
+        }
+        System.out.println("]");
+    }
 }
