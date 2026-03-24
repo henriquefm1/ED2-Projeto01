@@ -1,10 +1,17 @@
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter; // import pra poder escrever arquivo
+import java.io.IOException;
+
 public class Main {
     public static void main(String[] args) {
-        //testa a função com a palavra do exemplo no pdf
-        String textoTeste = "BANANA";
+        // le o arquivo de entrada ao inves de usar string fixa
+        String textoTeste = lerArquivo("entrada.txt");
+
+        // calcula a frequencia de cada caractere
         int[] resultado = contarFrequencias(textoTeste);
 
-        //imprime apenas os caracteres que apareceram se a frequencia for maior que 0
+        // imprime so os caracteres que realmente aparecem
         System.out.println("ETAPA 1: Tabela de Frequencia de Caracteres");
         for (int i = 0; i < resultado.length; i++) {
             if (resultado[i] > 0) {
@@ -12,15 +19,15 @@ public class Main {
             }
         }
 
-        //constroi a arvore de huffman
+        // constroi a arvore de huffman usando o heap
         No raiz = construirArvore(resultado);
         System.out.println("\nETAPA 3: Arvore de Huffman construida");
 
-        //gera tabela de codigos
+        // cria tabela onde vai guardar os codigos de cada caractere
         String[] tabela = new String[256];
         gerarCodigos(raiz, "", tabela);
 
-        //imprime tabela de codigos
+        // imprime os codigos gerados
         System.out.println("\nETAPA 4: Tabela de Codigos");
         for (int i = 0; i < tabela.length; i++) {
             if (tabela[i] != null) {
@@ -28,87 +35,159 @@ public class Main {
             }
         }
 
-        //codifica o texto
+        // transforma o texto original em codigo binario
         String textoCodificado = codificar(textoTeste, tabela);
 
         System.out.println("\nETAPA 5: Texto Codificado");
         System.out.println(textoCodificado);
 
-        //resumo da compressao
+        // salva o resultado comprimido em arquivo
+        salvarArquivo("saida.huff", textoCodificado);
+
+        // calcula tamanho original (8 bits por caractere)
         int tamanhoOriginal = textoTeste.length() * 8;
+
+        // tamanho depois de comprimido (ja em bits)
         int tamanhoComprimido = textoCodificado.length();
 
+        // calcula a taxa de compressao em porcentagem
         double taxa = (1 - (double)tamanhoComprimido / tamanhoOriginal) * 100;
 
         System.out.println("\nETAPA 5: Resumo da Compressao");
         System.out.println("Tamanho original....: " + tamanhoOriginal + " bits");
         System.out.println("Tamanho comprimido..: " + tamanhoComprimido + " bits");
         System.out.printf("Taxa de compressao..: %.2f%%\n", taxa);
+
+        // decodifica o texto usando a arvore pra testar se volta ao original
+        String textoDecodificado = decodificar(textoCodificado, raiz);
+
+        System.out.println("\nETAPA 6: Texto Decodificado");
+        System.out.println(textoDecodificado);
     }
 
     public static int[] contarFrequencias(String texto){
 
-        //cria um vetor onde todas as 256 posições começam com 0
+        // vetor que guarda quantas vezes cada caractere aparece
         int[] frequencias = new int[256];
 
-        //passa por cada letra do texto
+        // percorre o texto e soma +1 pra cada caractere encontrado
         for(int i = 0; i < texto.length(); i++){
             char caractere = texto.charAt(i);
-
-            //o caractere vira o indice do vetor, soma +1 naquela posição
             frequencias[caractere]++;
         }
         return frequencias;
     }
 
     public static No construirArvore(int[] frequencias) {
-        MinHeap heap = new MinHeap(); // cria o heap
+        // cria o heap (fila de prioridade)
+        MinHeap heap = new MinHeap();
 
-        // cria nós folha para cada caractere existente
+        // cria um no pra cada caractere que apareceu
         for (int i = 0; i < frequencias.length; i++) {
             if (frequencias[i] > 0) {
                 heap.inserir(new No((char) i, frequencias[i]));
             }
         }
 
-        // monta a árvore juntando os menores
+        // vai juntando os dois menores ate sobrar so a raiz
         while (heap.tamanho() > 1) {
-            No noEsquerda = heap.remover(); // menor
-            No noDireita = heap.remover();  // segundo menor
+            No noEsquerda = heap.remover();
+            No noDireita = heap.remover();
 
-            // cria nó pai somando frequências
+            // cria um no pai somando as frequencias
             No pai = new No('\0', noEsquerda.frequencia + noDireita.frequencia);
             pai.esquerda = noEsquerda;
             pai.direita = noDireita;
 
-            heap.inserir(pai); // volta pro heap
+            // coloca de volta no heap
+            heap.inserir(pai);
         }
 
-        return heap.remover(); // raiz da árvore
+        // retorna a raiz final da arvore
+        return heap.remover();
     }
 
     public static void gerarCodigos(No raiz, String codigo, String[] tabela) {
         if (raiz == null) return;
 
-        // se for folha, salva o código
+        // se for folha, salva o codigo do caractere
         if (raiz.esquerda == null && raiz.direita == null) {
             tabela[raiz.caractere] = codigo;
             return;
         }
 
-        // percorre esquerda (0)
+        // esquerda = 0
         gerarCodigos(raiz.esquerda, codigo + "0", tabela);
 
-        // percorre direita (1)
+        // direita = 1
         gerarCodigos(raiz.direita, codigo + "1", tabela);
     }
 
     public static String codificar(String texto, String[] tabela) {
+        // string que vai guardar o resultado final
         String resultado = "";
 
+        // substitui cada caractere pelo codigo dele
         for (int i = 0; i < texto.length(); i++) {
             char c = texto.charAt(i);
             resultado += tabela[c];
+        }
+
+        return resultado;
+    }
+
+    public static String lerArquivo(String caminho) {
+        // string builder pra ir montando o conteudo
+        StringBuilder conteudo = new StringBuilder();
+
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(caminho));
+            String linha;
+
+            // le linha por linha do arquivo
+            while ((linha = br.readLine()) != null) {
+                conteudo.append(linha);
+            }
+
+            br.close();
+        } catch (IOException e) {
+            System.out.println("Erro ao ler arquivo");
+        }
+
+        return conteudo.toString();
+    }
+
+    public static void salvarArquivo(String caminho, String conteudo) {
+        try {
+            // cria/abre o arquivo e escreve o conteudo comprimido
+            FileWriter writer = new FileWriter(caminho);
+            writer.write(conteudo);
+            writer.close();
+        } catch (IOException e) {
+            System.out.println("Erro ao salvar arquivo");
+        }
+    }
+
+    public static String decodificar(String codigo, No raiz) {
+        String resultado = "";
+        No atual = raiz;
+
+        // percorre os bits um por um
+        for (int i = 0; i < codigo.length(); i++) {
+            char bit = codigo.charAt(i);
+
+            // vai pra esquerda ou direita na arvore
+            if (bit == '0') {
+                atual = atual.esquerda;
+            } else {
+                atual = atual.direita;
+            }
+
+            // se chegou numa folha, encontrou um caractere
+            if (atual.esquerda == null && atual.direita == null) {
+                resultado += atual.caractere;
+                atual = raiz; // volta pra raiz pra continuar
+            }
         }
 
         return resultado;
