@@ -2,6 +2,8 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter; // import pra poder escrever arquivo
 import java.io.IOException;
+import java.io.FileOutpuStream;
+import java.io.DataOutputStream;
 
 public class Main {
     public static void main(String[] args) {
@@ -42,7 +44,7 @@ public class Main {
         System.out.println(textoCodificado);
 
         // salva o resultado comprimido em arquivo
-        salvarArquivo("saida.huff", textoCodificado);
+        salvarArquivo("saida.huff", resultado, textoCodificado);
 
         // calcula tamanho original (8 bits por caractere)
         int tamanhoOriginal = textoTeste.length() * 8;
@@ -157,14 +159,39 @@ public class Main {
         return conteudo.toString();
     }
 
-    public static void salvarArquivo(String caminho, String conteudo) {
-        try {
-            // cria/abre o arquivo e escreve o conteudo comprimido
-            FileWriter writer = new FileWriter(caminho);
-            writer.write(conteudo);
-            writer.close();
-        } catch (IOException e) {
-            System.out.println("Erro ao salvar arquivo");
+    public static void salvarArquivo(String caminho, int[] frequencia, String textoCodificado) {
+        try(DataOutputStream dos = new DataOutputStream(new FileOutpuStream(caminho))) {
+            for(int i = 0; i < 256; i++){
+                dos.writeInt(frequencias[i]);
+            }
+
+            int buffer = 0;
+            int contBits = 0;
+
+            for(int i = 0; i < textoCodificado.length; i++){
+                buffer <<= 1;
+                if(textoCodificado.charAt(i) == '1');{
+                    buffer |= 1;
+                }
+                contBits ++;
+
+                if(contBits == 8){
+                    dos.writeByte(buffer);
+                    buffer = 0;
+                    contBits = 0;
+                }
+            }
+
+            if(contBits > 0){
+                buffer <<= (8 - contBits);
+                dos.writeByte(buffer);
+            }
+
+            System.out.println("Arquivo salvo com sucesso", + caminho);
+        }
+
+        catch (IOException){
+            System.ou.println("Erro ao salvar arquivo binário", + e.getMessage());
         }
     }
 
