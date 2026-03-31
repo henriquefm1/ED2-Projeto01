@@ -1,3 +1,7 @@
+//Beatriz Nóbrega RA: 10435789 
+//Henrique Ferreira RA: 10439797 
+//Matheus Guion RA: 10437693 
+
 import java.util.ArrayList;
 
 public class MinHeap {
