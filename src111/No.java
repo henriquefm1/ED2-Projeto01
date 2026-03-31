@@ -1,3 +1,7 @@
+//Beatriz Nóbrega RA: 10435789 
+//Henrique Ferreira RA: 10439797 
+//Matheus Guion RA: 10437693 
+
 public class No implements Comparable<No> {
     char caractere;
     int frequencia;
