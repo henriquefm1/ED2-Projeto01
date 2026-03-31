@@ -1,3 +1,6 @@
+// Projeto 1 - Estrutura de Dados II
+// Integrantes: [Insira o nome completo do integrante 1], [Nome 2], [Nome 3]
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -10,7 +13,6 @@ import java.io.EOFException;
 
 public class Main {
     public static void main(String[] args) {
-        //verifica se o usuário digitou os comandos no terminal corretamente
         if (args.length < 3) {
             System.out.println("Uso incorreto! Utilize:");
             System.out.println("Para comprimir: java -jar huffman.jar c <arquivo_original> <arquivo_comprimido>");
@@ -23,7 +25,10 @@ public class Main {
         String arquivoSaida = args[2];
 
         if (comando.equals("c")) {
-            System.out.println("Iniciando Compressão...\n");
+            System.out.println("Iniciando Compressao...\n");
+            
+            // Inicia o cronômetro para o relatório
+            long tempoInicio = System.nanoTime();
             
             String textoOriginal = lerArquivo(arquivoEntrada);
             if (textoOriginal.isEmpty()) {
@@ -32,30 +37,59 @@ public class Main {
             }
 
             int[] resultado = contarFrequencias(textoOriginal);
+
+            //impressão da Tabela de Frequência
+            System.out.println("ETAPA 1: Tabela de Frequencia de Caracteres");
+            for (int i = 0; i < resultado.length; i++) {
+                if (resultado[i] > 0) {
+                    System.out.println("Caractere '" + (char)i + "' (ASCII: " + i + "): " + resultado[i]);
+                }
+            }
+
+            //impressão do Min-Heap é chamada dentro da função construirArvore
             No raiz = construirArvore(resultado);
+            System.out.println("\nETAPA 3: Arvore de Huffman construida com sucesso.");
             
             String[] tabela = new String[256];
             gerarCodigos(raiz, "", tabela);
 
+            //impressão da Tabela de Códigos
+            System.out.println("\nETAPA 4: Tabela de Codigos de Huffman");
+            for (int i = 0; i < tabela.length; i++) {
+                if (tabela[i] != null) {
+                    System.out.println("Caractere '" + (char)i + "': " + tabela[i]);
+                }
+            }
+
             String textoCodificado = codificar(textoOriginal, tabela);
             
-            // Salva o arquivo em binário
+            //salva o arquivo em binário
             salvarArquivo(arquivoSaida, resultado, textoCodificado);
+
+            //calcula o tempo de execução
+            long tempoFim = System.nanoTime();
+            long tempoExecucaoMs = (tempoFim - tempoInicio) / 1000000;
 
             int tamanhoOriginal = textoOriginal.length() * 8;
             int tamanhoComprimido = textoCodificado.length();
             double taxa = (1 - (double)tamanhoComprimido / tamanhoOriginal) * 100;
 
-            System.out.println("\nResumo da Compressao:");
-            System.out.println("Tamanho original....: " + tamanhoOriginal + " bits");
-            System.out.println("Tamanho comprimido..: " + tamanhoComprimido + " bits");
-            System.out.printf("Taxa de compressao..: %.2f%%\n", taxa);
+            //prints finais
+            System.out.println("\nETAPA 5: Resumo da Compressao");
+            System.out.println("Tamanho original......: " + tamanhoOriginal + " bits");
+            System.out.println("Tamanho comprimido....: " + tamanhoComprimido + " bits");
+            System.out.printf("Taxa de compressao....: %.2f%%\n", taxa);
+            System.out.println("Tempo de execucao.....: " + tempoExecucaoMs + " ms"); // Dado extra para o relatório!
 
         } else if (comando.equals("d")) {
-            System.out.println("Iniciando Descompressão...\n");
+            System.out.println("Iniciando Descompressao...\n");
             
-            // Chama a nova função mágica que faz o caminho inverso
+            long tempoInicio = System.nanoTime();
             descomprimirArquivo(arquivoEntrada, arquivoSaida);
+            long tempoFim = System.nanoTime();
+            long tempoExecucaoMs = (tempoFim - tempoInicio) / 1000000;
+            
+            System.out.println("Tempo de execucao da descompressao: " + tempoExecucaoMs + " ms");
             
         } else {
             System.out.println("Comando inválido. Use 'c' para comprimir ou 'd' para descomprimir.");
@@ -77,6 +111,11 @@ public class Main {
                 heap.inserir(new No((char) i, frequencias[i]));
             }
         }
+        
+        //imprime o Heap Inicial antes de começar a combinar os nós
+        System.out.println("\nETAPA 2: Min-Heap Inicial (Vetor)");
+        heap.imprimir();
+
         while (heap.tamanho() > 1) {
             No noEsquerda = heap.remover();
             No noDireita = heap.remover();
@@ -130,7 +169,6 @@ public class Main {
         StringBuilder conteudo = new StringBuilder();
         try (BufferedReader br = new BufferedReader(new FileReader(caminho))) {
             int c;
-            //usa leitura por caractere para garantir que TUDO seja lido (até quebras de linha especiais)
             while ((c = br.read()) != -1) {
                 conteudo.append((char) c);
             }
@@ -142,15 +180,12 @@ public class Main {
 
     public static void salvarArquivo(String caminho, int[] frequencias, String textoCodificado) {
         try (DataOutputStream dos = new DataOutputStream(new FileOutputStream(caminho))) {
-            //salva a tabela de frequências (Cabeçalho)
             for (int i = 0; i < 256; i++) {
                 dos.writeInt(frequencias[i]);
             }
             
-            //salva o tamanho exato de bits válidos!
             dos.writeInt(textoCodificado.length());
 
-            //salva os bits agrupados em bytes
             int buffer = 0;
             int contBits = 0;
             for (int i = 0; i < textoCodificado.length(); i++) {
@@ -169,56 +204,45 @@ public class Main {
                 buffer <<= (8 - contBits);
                 dos.writeByte(buffer);
             }
-            System.out.println("Arquivo comprimido salvo com sucesso: " + caminho);
+            System.out.println("\n-> Arquivo comprimido salvo com sucesso: " + caminho);
         } catch (IOException e) {
-            System.out.println("Erro ao salvar arquivo binário: " + e.getMessage());
+            System.out.println("Erro ao salvar arquivo binario: " + e.getMessage());
         }
     }
 
-    //le caminho inverso, lendo o binário e gerando o .txt original
     public static void descomprimirArquivo(String arquivoEntrada, String arquivoSaida) {
         try (DataInputStream dis = new DataInputStream(new FileInputStream(arquivoEntrada))) {
-            //lê a tabela de frequências
             int[] frequencias = new int[256];
             for (int i = 0; i < 256; i++) {
                 frequencias[i] = dis.readInt();
             }
 
-            //lê quantos bits reais nós precisamos processar
             int tamanhoRealBits = dis.readInt();
-
-            //reconstrói a Árvore de Huffman usando as frequências lidas
             No raiz = construirArvore(frequencias);
 
-            //lê os bytes e transforma de volta na string de "0"s e "1"s
             StringBuilder bitsCodificados = new StringBuilder();
             try {
                 while (true) {
                     byte b = dis.readByte();
-                    //converte o byte em 8 bits
                     for (int i = 7; i >= 0; i--) {
                         bitsCodificados.append((b >> i) & 1);
                     }
                 }
             } catch (EOFException e) {
-                //eh esperado chegar aqui quando o arquivo acaba
+                //fim do arquivo
             }
 
-            //corta fora os "zeros fantasmas" que completaram o último byte
             String bitsValidos = bitsCodificados.substring(0, tamanhoRealBits);
-
-            //decodifica usando o percurso da árvore
             String textoDecodificado = decodificar(bitsValidos, raiz);
 
-            //salva o texto restaurado em um novo arquivo
             try (FileWriter fw = new FileWriter(arquivoSaida)) {
                 fw.write(textoDecodificado);
             }
 
-            System.out.println("Arquivo descomprimido com sucesso: " + arquivoSaida);
+            System.out.println("-> Arquivo descomprimido com sucesso: " + arquivoSaida);
 
         } catch (IOException e) {
-            System.out.println("Erro na descompressão: " + e.getMessage());
+            System.out.println("Erro na descompressao: " + e.getMessage());
         }
     }
 }
