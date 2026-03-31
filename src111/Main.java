@@ -1,6 +1,3 @@
-// Projeto 1 - Estrutura de Dados II
-// Integrantes: [Insira o nome completo do integrante 1], [Nome 2], [Nome 3]
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
