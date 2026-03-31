@@ -10,7 +10,7 @@ import java.io.EOFException;
 
 public class Main {
     public static void main(String[] args) {
-        // Verifica se o usuário digitou os comandos no terminal corretamente
+        //verifica se o usuário digitou os comandos no terminal corretamente
         if (args.length < 3) {
             System.out.println("Uso incorreto! Utilize:");
             System.out.println("Para comprimir: java -jar huffman.jar c <arquivo_original> <arquivo_comprimido>");
@@ -130,7 +130,7 @@ public class Main {
         StringBuilder conteudo = new StringBuilder();
         try (BufferedReader br = new BufferedReader(new FileReader(caminho))) {
             int c;
-            // Usando leitura por caractere para garantir que TUDO seja lido (até quebras de linha especiais)
+            //usa leitura por caractere para garantir que TUDO seja lido (até quebras de linha especiais)
             while ((c = br.read()) != -1) {
                 conteudo.append((char) c);
             }
@@ -142,15 +142,15 @@ public class Main {
 
     public static void salvarArquivo(String caminho, int[] frequencias, String textoCodificado) {
         try (DataOutputStream dos = new DataOutputStream(new FileOutputStream(caminho))) {
-            // 1. Salva a tabela de frequências (Cabeçalho)
+            //salva a tabela de frequências (Cabeçalho)
             for (int i = 0; i < 256; i++) {
                 dos.writeInt(frequencias[i]);
             }
             
-            // 2. O PULO DO GATO: Salva o tamanho exato de bits válidos!
+            //salva o tamanho exato de bits válidos!
             dos.writeInt(textoCodificado.length());
 
-            // 3. Salva os bits agrupados em bytes
+            //salva os bits agrupados em bytes
             int buffer = 0;
             int contBits = 0;
             for (int i = 0; i < textoCodificado.length(); i++) {
@@ -175,42 +175,42 @@ public class Main {
         }
     }
 
-    // NOVA FUNÇÃO: Faz o caminho inverso, lendo o binário e gerando o .txt original
+    //le caminho inverso, lendo o binário e gerando o .txt original
     public static void descomprimirArquivo(String arquivoEntrada, String arquivoSaida) {
         try (DataInputStream dis = new DataInputStream(new FileInputStream(arquivoEntrada))) {
-            // 1. Lê a tabela de frequências
+            //lê a tabela de frequências
             int[] frequencias = new int[256];
             for (int i = 0; i < 256; i++) {
                 frequencias[i] = dis.readInt();
             }
 
-            // 2. Lê quantos bits reais nós precisamos processar
+            //lê quantos bits reais nós precisamos processar
             int tamanhoRealBits = dis.readInt();
 
-            // 3. Reconstrói a Árvore de Huffman usando as frequências lidas
+            //reconstrói a Árvore de Huffman usando as frequências lidas
             No raiz = construirArvore(frequencias);
 
-            // 4. Lê os bytes e transforma de volta na string de "0"s e "1"s
+            //lê os bytes e transforma de volta na string de "0"s e "1"s
             StringBuilder bitsCodificados = new StringBuilder();
             try {
                 while (true) {
                     byte b = dis.readByte();
-                    // Converte o byte em 8 bits
+                    //converte o byte em 8 bits
                     for (int i = 7; i >= 0; i--) {
                         bitsCodificados.append((b >> i) & 1);
                     }
                 }
             } catch (EOFException e) {
-                // É esperado chegar aqui quando o arquivo acaba
+                //eh esperado chegar aqui quando o arquivo acaba
             }
 
-            // 5. Corta fora os "zeros fantasmas" que completaram o último byte
+            //corta fora os "zeros fantasmas" que completaram o último byte
             String bitsValidos = bitsCodificados.substring(0, tamanhoRealBits);
 
-            // 6. Decodifica usando o percurso da árvore
+            //decodifica usando o percurso da árvore
             String textoDecodificado = decodificar(bitsValidos, raiz);
 
-            // 7. Salva o texto restaurado em um novo arquivo
+            //salva o texto restaurado em um novo arquivo
             try (FileWriter fw = new FileWriter(arquivoSaida)) {
                 fw.write(textoDecodificado);
             }
