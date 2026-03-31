@@ -21,8 +21,6 @@ public class MinHeap {
             No noAtual = heap.get(indiceAtual);
             No noPai = heap.get(indicePai);
 
-            // SUBSTITUÍDO: noAtual.frequencia < noPai.frequencia
-            // AGORA USA O compareTo PARA TRATAR O DESEMPATE
             if (noAtual.compareTo(noPai) < 0) {
                 heap.set(indiceAtual, noPai);
                 heap.set(indicePai, noAtual);
